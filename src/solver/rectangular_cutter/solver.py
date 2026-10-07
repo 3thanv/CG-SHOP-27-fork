@@ -40,38 +40,6 @@ def _compress_closed_path(path: list[tuple[int, int]]) -> list[tuple[int, int]]:
     return corners or [vertices[0]]
 
 
-def _is_rectangle(cells: set[tuple[int, int]]) -> bool:
-    if not cells:
-        return False
-    xs = [x for x, _ in cells]
-    ys = [y for _, y in cells]
-    return len(cells) == (max(xs) - min(xs) + 1) * (max(ys) - min(ys) + 1)
-
-
-def _check_supported(instance: CGSHOP2027Instance) -> tuple[
-    set[tuple[int, int]], set[tuple[int, int]]
-]:
-    if instance.number_of_cutters != 1:
-        raise ValueError("The exact solver supports exactly one cutter.")
-
-    region_cells = set(rasterize(instance.region_to_cover).cells())
-    if not region_cells:
-        raise ValueError("The region contains no grid cells.")
-    if len(region_cells) > MAX_REGION_CELLS:
-        raise ValueError(
-            f"The exact solver supports at most {MAX_REGION_CELLS} region cells; "
-            f"this instance has {len(region_cells)}."
-        )
-
-    cutter_cells = set(rasterize_ring(instance.cutter).cells())
-    if not cutter_cells:
-        raise ValueError("The cutter contains no grid cells.")
-    if not _is_rectangle(cutter_cells):
-        raise ValueError("The exact solver requires an axis-aligned rectangular cutter.")
-
-    return region_cells, cutter_cells
-
-
 def _build_candidate_centers(
     instance: CGSHOP2027Instance,
     region_cells: set[tuple[int, int]],
@@ -133,8 +101,8 @@ def _make_tour(
 
 
 def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
-    """Solve a supported instance, raising ValueError if no tour is found."""
-    region_cells, cutter_cells = _check_supported(instance)
+    region_cells = set(rasterize(instance.region_to_cover).cells())
+    cutter_cells = set(rasterize_ring(instance.cutter).cells())
     centers, covering_centers = _build_candidate_centers(
         instance, region_cells, cutter_cells
     )
