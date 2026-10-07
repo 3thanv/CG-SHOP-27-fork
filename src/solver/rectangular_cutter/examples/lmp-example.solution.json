@@ -1,0 +1,18 @@
+{
+  "content_type": "CGSHOP2027_Solution",
+  "instance_uid": "lmp_example_instance1",
+  "tours": [
+    {
+      "x": [6, 4, 4, 19, 19, 9, 9, 22, 22, 6],
+      "y": [44, 44, 49, 49, 45, 45, 41, 41, 37, 37]
+    },
+    {
+      "x": [6, 19, 19, 18, 18, 10, 10, 6],
+      "y": [33, 33, 32, 32, 25, 25, 31, 31]
+    }
+  ],
+  "meta": {
+    "source": "hand-drawn example",
+    "note": "see figure below"
+  }
+}

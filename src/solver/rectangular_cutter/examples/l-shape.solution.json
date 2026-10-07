@@ -1,0 +1,1 @@
+{"content_type":"CGSHOP2027_Solution","instance_uid":"exact-l-shape-k1","tours":[{"x":[0,0,1,1,4,4],"y":[0,4,4,1,1,0]}],"meta":{"algorithm":"rectangular_cutter_cp_sat","status":"OPTIMAL","optimal":true,"initial_tour_length":16,"best_bound":16.0,"solve_seconds":0.18807333300355822}}

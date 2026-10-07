@@ -1,0 +1,1 @@
+{"content_type":"CGSHOP2027_Solution","instance_uid":"lmp_example_instance1_k1","tours":[{"x":[23,18,18,10,10,18,18,5,5],"y":[38,38,25,25,50,50,41,41,38]}],"meta":{"algorithm":"rectangular_cutter_cp_sat","status":"FEASIBLE","optimal":false,"initial_tour_length":102,"best_bound":29.0,"solve_seconds":51.696247790998314}}
