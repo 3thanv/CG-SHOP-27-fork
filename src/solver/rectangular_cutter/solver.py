@@ -152,6 +152,7 @@ def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = MAX_TIME_SECONDS
     solver.parameters.num_search_workers = 8
+    solver.parameters.log_search_progress = True
     started_at = perf_counter()
     status = solver.Solve(model)
     solve_seconds = perf_counter() - started_at
