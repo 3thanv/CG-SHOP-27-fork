@@ -78,7 +78,7 @@ class ExactSolverTests(unittest.TestCase):
             number_of_cutters=2,
         )
 
-        with self.assertRaisesRegex(ValueError, "exactly one cutter"):
+        with self.assertRaisesRegex(ValueError, "exactly 2"):
             solve(problem)
 
     def test_twenty_cell_region_solves_at_candidate_limit(self) -> None:
@@ -90,27 +90,22 @@ class ExactSolverTests(unittest.TestCase):
         self.assertTrue(solution.meta["optimal"])
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
-    def test_rejects_more_than_twenty_candidate_centers(self) -> None:
-        problem = instance(ring([(0, 0), (21, 0), (21, 1), (0, 1)]))
+    def test_rejects_more_than_two_hundred_candidate_centers(self) -> None:
+        problem = instance(ring([(0, 0), (201, 0), (201, 1), (0, 1)]))
 
-        with self.assertRaisesRegex(ValueError, "at most 20 candidate cutter centers"):
+        with self.assertRaisesRegex(ValueError, "at most 200 candidate cutter centers"):
             solve(problem)
 
-    def test_rejects_more_than_thirty_six_region_cells(self) -> None:
-        problem = instance(ring([(0, 0), (37, 0), (37, 1), (0, 1)]))
-
-        with self.assertRaisesRegex(ValueError, "at most 36 region cells"):
-            solve(problem)
-
-    def test_rejects_non_rectangular_cutter(self) -> None:
+    def test_accepts_non_rectangular_cutter(self) -> None:
         cutter = ring([(0, 0), (2, 0), (2, 1), (1, 1), (1, 2), (0, 2)])
         problem = instance(
             ring([(0, 0), (1, 0), (1, 1), (0, 1)]),
             cutter=cutter,
         )
 
-        with self.assertRaisesRegex(ValueError, "axis-aligned rectangular cutter"):
-            solve(problem)
+        solution = solve(problem)
+
+        self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
     def test_movement_grid_includes_non_covering_transit_positions(self) -> None:
         problem = CGSHOP2027Instance(
