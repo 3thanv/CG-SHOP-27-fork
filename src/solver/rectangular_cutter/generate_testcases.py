@@ -100,19 +100,50 @@ def main() -> None:
         metavar=("FIRST", "SECOND", "THIRD"),
         help="Cell counts for the three instances (default: 30 40 50)",
     )
+    parser.add_argument(
+        "--cutter-cells",
+        type=int,
+        nargs=3,
+        default=[7, 7, 7],
+        metavar=("FIRST", "SECOND", "THIRD"),
+        help="Cutter cell counts for the three instances (default: 7 7 7)",
+    )
+    parser.add_argument(
+        "--region-grid-size",
+        type=int,
+        default=30,
+        help="Width and height of the square region grid (default: 30)",
+    )
+    parser.add_argument(
+        "--cutter-grid-size",
+        type=int,
+        default=6,
+        help="Width and height of the square cutter grid (default: 6)",
+    )
     args = parser.parse_args()
 
     args.output.mkdir(parents=True, exist_ok=True)
-    for index, cell_count in enumerate(args.region_cells):
+    for index, (cell_count, cutter_cell_count) in enumerate(
+        zip(args.region_cells, args.cutter_cells, strict=True)
+    ):
         seed = args.seed + index
         instance = generate_random_testcase(
-            instance_uid=f"random_k1_seed{seed}_{cell_count}cells",
+            instance_uid=(
+                f"random_k1_seed{seed}_{cell_count}region_"
+                f"{cutter_cell_count}cutter_cells"
+            ),
             seed=seed,
             region_cells=cell_count,
+            cutter_cells=cutter_cell_count,
+            region_grid_size=args.region_grid_size,
+            cutter_grid_size=args.cutter_grid_size,
         )
         destination = args.output / f"{instance.instance_uid}.instance.json"
         destination.write_text(instance.model_dump_json(indent=2), encoding="utf-8")
-        print(f"Saved {destination}: {cell_count} region cells, seed {seed}")
+        print(
+            f"Saved {destination}: {cell_count} region cells, "
+            f"{cutter_cell_count} cutter cells, seed {seed}"
+        )
 
 
 if __name__ == "__main__":

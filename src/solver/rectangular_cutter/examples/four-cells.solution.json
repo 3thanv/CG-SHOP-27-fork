@@ -1,1 +1,0 @@
-{"content_type":"CGSHOP2027_Solution","instance_uid":"rectangular-cutter-four-cells","tours":[{"x":[0,0,1,1],"y":[1,0,0,1]}],"meta":{"algorithm":"rectangular_cutter_cp_sat","status":"OPTIMAL","optimal":true}}

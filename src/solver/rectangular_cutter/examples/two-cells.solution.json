@@ -1,1 +1,0 @@
-{"content_type":"CGSHOP2027_Solution","instance_uid":"rectangular-cutter-two-cells","tours":[{"x":[0,1],"y":[0,0]}],"meta":{"algorithm":"rectangular_cutter_cp_sat","status":"OPTIMAL","optimal":true}}

@@ -90,32 +90,38 @@ class ExactSolverTests(unittest.TestCase):
         self.assertTrue(solution.meta["optimal"])
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
-    def test_twenty_one_cell_region_solves_without_candidate_limit(self) -> None:
+    def test_rejects_more_than_twenty_candidate_centers(self) -> None:
         problem = instance(ring([(0, 0), (21, 0), (21, 1), (0, 1)]))
 
-        solution = solve(problem)
+        with self.assertRaisesRegex(ValueError, "at most 20 candidate cutter centers"):
+            solve(problem)
 
-        self.assertEqual(solution.max_tour_length, 40)
-        self.assertTrue(solution.meta["optimal"])
-        self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
+    def test_rejects_more_than_thirty_six_region_cells(self) -> None:
+        problem = instance(ring([(0, 0), (37, 0), (37, 1), (0, 1)]))
 
-    def test_accepts_non_rectangular_cutter(self) -> None:
+        with self.assertRaisesRegex(ValueError, "at most 36 region cells"):
+            solve(problem)
+
+    def test_rejects_non_rectangular_cutter(self) -> None:
         cutter = ring([(0, 0), (2, 0), (2, 1), (1, 1), (1, 2), (0, 2)])
         problem = instance(
             ring([(0, 0), (1, 0), (1, 1), (0, 1)]),
             cutter=cutter,
         )
 
-        solution = solve(problem)
-
-        self.assertEqual(solution.max_tour_length, 0)
-        self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
+        with self.assertRaisesRegex(ValueError, "axis-aligned rectangular cutter"):
+            solve(problem)
 
     def test_movement_grid_includes_non_covering_transit_positions(self) -> None:
-        cutter = ring([(0, 0), (2, 0), (2, 1), (1, 1), (1, 2), (0, 2)])
-        problem = instance(
-            ring([(0, 0), (1, 0), (1, 1), (0, 1)]),
-            cutter=cutter,
+        problem = CGSHOP2027Instance(
+            instance_uid="donut",
+            region_to_cover=PolyominoWithHoles(
+                outer_boundary=ring([(0, 0), (3, 0), (3, 3), (0, 3)]),
+                inner_boundaries=[ring([(1, 1), (1, 2), (2, 2), (2, 1)])],
+            ),
+            cutter=ring([(0, 0), (1, 0), (1, 1), (0, 1)]),
+            cutter_center=(0, 0),
+            number_of_cutters=1,
         )
         region_cells = set(rasterize(problem.region_to_cover).cells())
         cutter_cells = set(rasterize_ring(problem.cutter).cells())
@@ -124,9 +130,12 @@ class ExactSolverTests(unittest.TestCase):
             problem, region_cells, cutter_cells
         )
 
-        transit_index = centers.index((-1, -1))
-        self.assertEqual(len(centers), 4)
-        self.assertNotIn(transit_index, covering_centers[(0, 0)])
+        transit_index = centers.index((1, 1))
+        self.assertEqual(len(centers), 9)
+        self.assertNotIn(transit_index, [i for indices in covering_centers.values() for i in indices])
+        solution = solve(problem)
+        self.assertEqual(solution.max_tour_length, 8)
+        self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
     def test_cli_writes_standard_solution_json(self) -> None:
         problem = instance(ring([(0, 0), (1, 0), (1, 1), (0, 1)]))

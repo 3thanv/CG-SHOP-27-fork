@@ -1,6 +1,5 @@
 """Exact CP-SAT solver for one cutter on cell-based polyomino instances."""
 
-from collections import deque
 from time import perf_counter
 
 from ortools.sat.python import cp_model
@@ -14,6 +13,8 @@ from cgshop2027_pyutils.schemas import (
 from cgshop2027_pyutils.verify import SolutionValidator
 
 MAX_TIME_SECONDS = 50.0
+MAX_REGION_CELLS = 36
+MAX_CANDIDATE_CENTERS = 20
 
 
 def _compress_closed_path(path: list[tuple[int, int]]) -> list[tuple[int, int]]:
@@ -39,6 +40,14 @@ def _compress_closed_path(path: list[tuple[int, int]]) -> list[tuple[int, int]]:
     return corners or [vertices[0]]
 
 
+def _is_rectangle(cells: set[tuple[int, int]]) -> bool:
+    if not cells:
+        return False
+    xs = [x for x, _ in cells]
+    ys = [y for _, y in cells]
+    return len(cells) == (max(xs) - min(xs) + 1) * (max(ys) - min(ys) + 1)
+
+
 def _check_supported(instance: CGSHOP2027Instance) -> tuple[
     set[tuple[int, int]], set[tuple[int, int]]
 ]:
@@ -48,10 +57,17 @@ def _check_supported(instance: CGSHOP2027Instance) -> tuple[
     region_cells = set(rasterize(instance.region_to_cover).cells())
     if not region_cells:
         raise ValueError("The region contains no grid cells.")
+    if len(region_cells) > MAX_REGION_CELLS:
+        raise ValueError(
+            f"The exact solver supports at most {MAX_REGION_CELLS} region cells; "
+            f"this instance has {len(region_cells)}."
+        )
 
     cutter_cells = set(rasterize_ring(instance.cutter).cells())
     if not cutter_cells:
         raise ValueError("The cutter contains no grid cells.")
+    if not _is_rectangle(cutter_cells):
+        raise ValueError("The exact solver requires an axis-aligned rectangular cutter.")
 
     return region_cells, cutter_cells
 
@@ -67,6 +83,12 @@ def _build_candidate_centers(
     for cell_x, cell_y in region_cells:
         for offset_x, offset_y in offsets:
             covering_positions.add((cell_x - offset_x, cell_y - offset_y))
+            if len(covering_positions) > MAX_CANDIDATE_CENTERS:
+                raise ValueError(
+                    "The exact solver supports at most "
+                    f"{MAX_CANDIDATE_CENTERS} candidate cutter centers; "
+                    "this instance has more."
+                )
 
     min_x = min(x for x, _ in covering_positions)
     max_x = max(x for x, _ in covering_positions)
@@ -99,119 +121,6 @@ def _transitions(centers: list[tuple[int, int]]) -> list[tuple[int, int]]:
     return allowed
 
 
-def _shortest_paths_from(
-    source: int, neighbors: list[list[int]]
-) -> list[list[int] | None]:
-    predecessor: list[int | None] = [None] * len(neighbors)
-    predecessor[source] = source
-    queue = deque([source])
-    while queue:
-        current = queue.popleft()
-        for neighbor in neighbors[current]:
-            if predecessor[neighbor] is None:
-                predecessor[neighbor] = current
-                queue.append(neighbor)
-
-    paths: list[list[int] | None] = [None] * len(neighbors)
-    for target, parent in enumerate(predecessor):
-        if parent is None:
-            continue
-        path = []
-        current = target
-        while current != source:
-            path.append(current)
-            current = predecessor[current]
-            if current is None:
-                raise RuntimeError("Broken predecessor chain in shortest paths.")
-        path.append(source)
-        path.reverse()
-        paths[target] = path
-    return paths
-
-
-def _check_connected(
-    centers: list[tuple[int, int]], transitions: list[tuple[int, int]]
-) -> None:
-    neighbors: dict[int, list[int]] = {index: [] for index in range(len(centers))}
-    for start, end in transitions:
-        if start != end:
-            neighbors[start].append(end)
-
-    seen = {0}
-    queue = deque([0])
-    while queue:
-        for neighbor in neighbors[queue.popleft()]:
-            if neighbor not in seen:
-                seen.add(neighbor)
-                queue.append(neighbor)
-    if len(seen) != len(centers):
-        raise ValueError(
-            "Candidate cutter centers are disconnected by unit moves; "
-            "this instance is unsupported by the exact solver."
-        )
-
-
-def _transition_neighbors(
-    center_count: int, transitions: list[tuple[int, int]]
-) -> list[list[int]]:
-    neighbors: list[list[int]] = [[] for _ in range(center_count)]
-    for start, end in transitions:
-        neighbors[start].append(end)
-    return neighbors
-
-
-def _greedy_closed_walk(
-    centers: list[tuple[int, int]],
-    covering_centers: dict[tuple[int, int], list[int]],
-    neighbors: list[list[int]],
-) -> list[int]:
-    covered_by_center = [set() for _ in centers]
-    for cell, indices in covering_centers.items():
-        for index in indices:
-            covered_by_center[index].add(cell)
-    all_cells = set(covering_centers)
-
-    def build_walk(start: int) -> list[int]:
-        walk = [start]
-        covered = set(covered_by_center[start])
-        current = start
-        while covered != all_cells:
-            shortest_paths = _shortest_paths_from(current, neighbors)
-            best: tuple[float, int, int, list[int]] | None = None
-            for target, path in enumerate(shortest_paths):
-                if path is None:
-                    continue
-                gain = len(covered_by_center[target] - covered)
-                distance = len(path) - 1
-                if not gain:
-                    continue
-                score = (gain / max(distance, 1), gain, -distance, path)
-                if best is None or score[:3] > best[:3]:
-                    best = score
-            if best is None:
-                raise ValueError("Could not construct a covering walk.")
-            path = best[3]
-            walk.extend(path[1:])
-            for index in path[1:]:
-                covered.update(covered_by_center[index])
-            current = path[-1]
-
-        shortest_paths = _shortest_paths_from(current, neighbors)
-        path_home = shortest_paths[start]
-        if path_home is None:
-            raise ValueError("Could not close the covering walk.")
-        walk.extend(path_home[1:])
-        return walk
-
-    start_candidates = sorted(
-        range(len(centers)),
-        key=lambda index: len(covered_by_center[index]),
-        reverse=True,
-    )[: min(24, len(centers))]
-    walks = [build_walk(start) for start in start_candidates]
-    return min(walks, key=len)
-
-
 def _make_tour(
     solver: cp_model.CpSolver,
     positions: list[cp_model.IntVar],
@@ -230,12 +139,10 @@ def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
         instance, region_cells, cutter_cells
     )
     transitions = _transitions(centers)
-    _check_connected(centers, transitions)
-    neighbors = _transition_neighbors(len(centers), transitions)
-    initial_walk = _greedy_closed_walk(centers, covering_centers, neighbors)
 
-    # A feasible closed walk is an upper bound on the optimal tour length.
-    horizon = max(1, len(initial_walk) - 1)
+    # Walking every edge of a spanning tree and returning to its root gives a
+    # feasible closed tour through all candidate and transit positions.
+    horizon = max(1, 2 * (len(centers) - 1))
     model = cp_model.CpModel()
     positions = [
         model.NewIntVar(0, len(centers) - 1, f"position_{step}")
@@ -275,15 +182,6 @@ def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
         )
 
     model.Minimize(tour_length)
-    initial_length = len(initial_walk) - 1
-    for step, position in enumerate(positions):
-        model.AddHint(
-            position,
-            initial_walk[step] if step <= initial_length else initial_walk[-1],
-        )
-    for step, is_active in enumerate(active):
-        model.AddHint(is_active, int(step < initial_length))
-    model.AddHint(tour_length, initial_length)
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = MAX_TIME_SECONDS
     solver.parameters.num_search_workers = 8
@@ -312,7 +210,6 @@ def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
             "algorithm": "rectangular_cutter_cp_sat",
             "status": solver.StatusName(status),
             "optimal": status == cp_model.OPTIMAL,
-            "initial_tour_length": initial_length,
             "best_bound": solver.BestObjectiveBound(),
             "solve_seconds": solve_seconds,
         },
