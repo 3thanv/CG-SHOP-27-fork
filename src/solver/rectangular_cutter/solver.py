@@ -13,8 +13,7 @@ from cgshop2027_pyutils.schemas import (
 from cgshop2027_pyutils.verify import SolutionValidator
 
 MAX_TIME_SECONDS = 50.0
-MAX_REGION_CELLS = 36
-MAX_CANDIDATE_CENTERS = 20
+MAX_CANDIDATE_CENTERS = 200
 
 
 def _compress_closed_path(path: list[tuple[int, int]]) -> list[tuple[int, int]]:

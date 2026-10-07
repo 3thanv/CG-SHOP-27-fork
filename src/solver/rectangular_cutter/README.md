@@ -1,15 +1,21 @@
 # Exact single-cutter solver
 
 This solver uses CP-SAT to find a minimum-length closed tour for one cutter.
-It supports exactly one cutter, requires the cutter to rasterize to a filled
-axis-aligned rectangle, and accepts at most 36 region cells and 20 distinct
-cutter-center positions that cover region cells. Region and cutter polygons
-are rasterized to grid cells. The movement graph also includes transit
-positions in its integer bounding box, so the tour can travel between mowing
-positions without cutting. The model uses a closed-walk bound of twice the
-number of movement-grid edges and no heuristic starting route or solution
-hint. CP-SAT has a fixed 50-second time limit. The output metadata reports the
-best objective bound, solve time, and whether optimality was proved.
+The instance must specify exactly one cutter. Region and cutter polygons are
+rasterized to grid cells; the cutter does not need to be rectangular. The
+solver accepts at most 200 distinct cutter-center positions that cover region
+cells. There is no separate region-cell limit, but this also means a region
+can contain at most 200 rasterized cells: each region cell contributes a
+distinct covering position for any fixed cutter-cell offset. The cutter shape
+may cause the 200-position limit to be reached with fewer region cells.
+
+The movement graph also includes transit positions in the integer bounding
+box, so the tour can travel between mowing positions without cutting. The
+model uses a closed-walk bound of twice the number of movement-grid edges and
+no heuristic starting route or solution hint. CP-SAT has a fixed 50-second
+time limit. It returns a feasible solution if one is found before the limit;
+optimality is not guaranteed. The output metadata reports the best objective
+bound, solve time, and whether optimality was proved.
 
 Run it from this directory:
 
@@ -18,9 +24,10 @@ uv run main.py input.instance.json output.solution.json
 ```
 
 The output is a standard CG:SHOP solution JSON. Its `meta` object includes the
-CP-SAT status and whether optimality was proved. Unsupported instances and
-instances for which CP-SAT finds no tour exit with an error instead of writing
-a solution file.
+CP-SAT status and whether optimality was proved. Instances with more than 200
+distinct covering cutter-center positions are rejected. If CP-SAT finds no
+feasible tour within the time limit, the command exits with an error instead
+of writing a solution file.
 
 Designed baseline instances and their exact solutions are in
 `examples/exact-small`.
@@ -31,11 +38,9 @@ Run the focused tests with:
 uv run python -m unittest
 ```
 
-The testcase generator can create larger cases for experiments; the exact
-solver rejects generated cases that exceed its supported region or candidate
-position limits. Add `--rectangular-region` and `--rectangular-cutter` to
-generate an axis-aligned rectangular lawn and robot with the requested cell
-counts. For example:
+The testcase generator can create larger cases for experiments. Add
+`--rectangular-region` and `--rectangular-cutter` to generate an axis-aligned
+rectangular lawn and robot with the requested cell counts. For example:
 
 ```sh
 uv run python generate_testcases.py examples/generated-rectangles \
