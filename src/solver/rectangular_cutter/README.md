@@ -22,6 +22,9 @@ CP-SAT status and whether optimality was proved. Unsupported instances and
 instances for which CP-SAT finds no tour exit with an error instead of writing
 a solution file.
 
+Designed baseline instances and their exact solutions are in
+`examples/exact-small`.
+
 Run the focused tests with:
 
 ```sh
@@ -30,13 +33,26 @@ uv run python -m unittest
 
 The testcase generator can create larger cases for experiments; the exact
 solver rejects generated cases that exceed its supported region or candidate
-position limits. For example:
+position limits. Add `--rectangular-region` and `--rectangular-cutter` to
+generate an axis-aligned rectangular lawn and robot with the requested cell
+counts. For example:
 
 ```sh
-uv run python generate_testcases.py examples/generated-large \
+uv run python generate_testcases.py examples/generated-rectangles \
   --seed 2030 \
-  --region-cells 100 150 200 \
-  --cutter-cells 12 18 24 \
-  --region-grid-size 50 \
-  --cutter-grid-size 10
+  --region-cells 28 30 32 \
+  --cutter-cells 7 9 11 \
+  --rectangular-region \
+  --rectangular-cutter
+```
+
+Omit `--rectangular-region` to generate irregular connected lawns while keeping
+the robot rectangular:
+
+```sh
+uv run python generate_testcases.py examples/generated-irregular-rectangles \
+  --seed 3070 \
+  --region-cells 28 30 32 \
+  --cutter-cells 8 10 12 \
+  --rectangular-cutter
 ```

@@ -54,6 +54,21 @@ def _random_connected_grid(
     return merged
 
 
+def _rectangle_dimensions(target_cells: int) -> tuple[int, int]:
+    if target_cells < 1:
+        raise ValueError("target_cells must be positive.")
+
+    width = int(target_cells**0.5)
+    while target_cells % width:
+        width -= 1
+    return width, target_cells // width
+
+
+def _rectangle_with_area(target_cells: int) -> Polygon:
+    width, height = _rectangle_dimensions(target_cells)
+    return box(0, 0, width, height)
+
+
 def generate_random_testcase(
     instance_uid: str,
     seed: int,
@@ -61,18 +76,32 @@ def generate_random_testcase(
     cutter_cells: int = 7,
     region_grid_size: int = 30,
     cutter_grid_size: int = 6,
+    rectangular_region: bool = False,
+    rectangular_cutter: bool = False,
 ) -> CGSHOP2027Instance:
     rng = random.Random(seed)
-    region_polygon = _random_connected_grid(
-        rng, region_grid_size, region_grid_size, region_cells
+    region_polygon = (
+        _rectangle_with_area(region_cells)
+        if rectangular_region
+        else _random_connected_grid(
+            rng, region_grid_size, region_grid_size, region_cells
+        )
     )
-    cutter_polygon = _random_connected_grid(
-        rng, cutter_grid_size, cutter_grid_size, cutter_cells
+    cutter_polygon = (
+        _rectangle_with_area(cutter_cells)
+        if rectangular_cutter
+        else _random_connected_grid(
+            rng, cutter_grid_size, cutter_grid_size, cutter_cells
+        )
     )
     region_polygon = orient(region_polygon, sign=1.0)
     cutter_polygon = orient(cutter_polygon, sign=1.0)
-    cutter_center_point = cutter_polygon.representative_point()
-    cutter_center = (int(cutter_center_point.x), int(cutter_center_point.y))
+    if rectangular_cutter:
+        cutter_width, cutter_height = _rectangle_dimensions(cutter_cells)
+        cutter_center = (cutter_width // 2, cutter_height // 2)
+    else:
+        cutter_center_point = cutter_polygon.representative_point()
+        cutter_center = (int(cutter_center_point.x), int(cutter_center_point.y))
 
     return CGSHOP2027Instance(
         instance_uid=instance_uid,
@@ -120,6 +149,16 @@ def main() -> None:
         default=6,
         help="Width and height of the square cutter grid (default: 6)",
     )
+    parser.add_argument(
+        "--rectangular-region",
+        action="store_true",
+        help="Make each region an axis-aligned rectangle with the requested area",
+    )
+    parser.add_argument(
+        "--rectangular-cutter",
+        action="store_true",
+        help="Make each cutter an axis-aligned rectangle with the requested area",
+    )
     args = parser.parse_args()
 
     args.output.mkdir(parents=True, exist_ok=True)
@@ -127,9 +166,10 @@ def main() -> None:
         zip(args.region_cells, args.cutter_cells, strict=True)
     ):
         seed = args.seed + index
+        region_shape = "rectangle_" if args.rectangular_region else ""
         instance = generate_random_testcase(
             instance_uid=(
-                f"random_k1_seed{seed}_{cell_count}region_"
+                f"{region_shape}random_k1_seed{seed}_{cell_count}region_"
                 f"{cutter_cell_count}cutter_cells"
             ),
             seed=seed,
@@ -137,6 +177,8 @@ def main() -> None:
             cutter_cells=cutter_cell_count,
             region_grid_size=args.region_grid_size,
             cutter_grid_size=args.cutter_grid_size,
+            rectangular_region=args.rectangular_region,
+            rectangular_cutter=args.rectangular_cutter,
         )
         destination = args.output / f"{instance.instance_uid}.instance.json"
         destination.write_text(instance.model_dump_json(indent=2), encoding="utf-8")
