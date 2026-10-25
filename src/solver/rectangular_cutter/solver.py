@@ -1,14 +1,13 @@
 from ortools.sat.python import cp_model
 
 from cgshop2027_pyutils.grid import rasterize, rasterize_ring
-from cgshop2027_pyutils.schemas import (
-    CGSHOP2027Instance,
-    CGSHOP2027Solution,
-    CutterTour,
-)
+from cgshop2027_pyutils.schemas import CGSHOP2027Instance
 from cgshop2027_pyutils.verify import SolutionValidator
 
+from path_solution import CutterPath, PathSolution
+
 MAX_DURATION = 50.0 
+
 
 """
 Returns a list of allowed center positions for the cutter.
@@ -18,6 +17,8 @@ def _center_candidates(
     instance: CGSHOP2027Instance,
     region_cells: set[tuple[int, int]],
     cutter_cells: set[tuple[int, int]],
+    start: tuple[int, int], 
+    end: tuple[int, int],
 ) -> tuple[list[tuple[int, int]], dict[tuple[int, int], list[int]]]:
     center_x, center_y = instance.cutter_center
     offsets = sorted((x-center_x, y-center_y) for x, y in cutter_cells)
@@ -26,10 +27,11 @@ def _center_candidates(
         for offset_x, offset_y in offsets:
             covering_positions.add((cell_x-offset_x, cell_y-offset_y))
 
-    min_x = min(x for x, _ in covering_positions)
-    max_x = max(x for x, _ in covering_positions)
-    min_y = min(y for _, y in covering_positions)
-    max_y = max(y for _, y in covering_positions)
+    movement_positions = covering_positions | {start, end}
+    min_x = min(x for x, _ in movement_positions)
+    max_x = max(x for x, _ in movement_positions)
+    min_y = min(y for _, y in movement_positions)
+    max_y = max(y for _, y in movement_positions)
     
     # Represents the smallest bounding box containing all covering_positions
     centers = [(x, y) for x in range(min_x, max_x+1) for y in range(min_y, max_y+1)]
@@ -71,20 +73,28 @@ def _make_tour(
     positions: list[cp_model.IntVar],
     centers: list[tuple[int, int]],
     length: int,
-) -> CutterTour:
+) -> CutterPath:
     x_coords, y_coords = [], []
     for position in positions[:length+1]:
         center_index = solver.Value(position)
         x, y = centers[center_index]
         x_coords.append(x)
         y_coords.append(y)
-    return CutterTour(x=x_coords, y=y_coords)
+    return CutterPath(x=x_coords, y=y_coords)
 
 
-def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
+def solve(
+    instance: CGSHOP2027Instance,
+    *,
+    start: tuple[int, int],
+    end: tuple[int, int],
+) -> PathSolution:
     region_cells = set(rasterize(instance.region_to_cover).cells())
     cutter_cells = set(rasterize_ring(instance.cutter).cells())
-    centers, cell_coverage = _center_candidates(instance, region_cells, cutter_cells)
+    
+    centers, cell_coverage = _center_candidates(instance, region_cells, cutter_cells, start, end)
+    start_index = centers.index(start)
+    end_index = centers.index(end)
     transitions = _allowed_transitions(centers) 
     
     model = cp_model.CpModel()
@@ -115,9 +125,9 @@ def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
         model.Add(sum(covered_steps) >= 1)
         
     # Enforce other constraints
-    model.Add(positions[0] == positions[max_steps])
+    model.Add(positions[0] == start_index)
     model.Add(sum(is_moving) == tour_length) 
-    model.AddElement(tour_length, positions, positions[0]) 
+    model.AddElement(tour_length, positions, end_index)
     model.Minimize(tour_length)
     
     # Configuring the solver and returning the solution
@@ -128,10 +138,14 @@ def solve(instance: CGSHOP2027Instance) -> CGSHOP2027Solution:
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         raise TimeoutError(f"No solution found within {MAX_DURATION:g} seconds.")
 
-    solution = CGSHOP2027Solution(
+    # TODO - uses custom classes instead of the provided utils
+    solution = PathSolution( 
         instance_uid=instance.instance_uid,
         tours=[_make_tour(solver, positions, centers, solver.Value(tour_length))],
-        meta={"algorithm": "rectangular_cutter cp-sat"},
+        meta={
+            "algorithm": "rectangular_cutter cp-sat",
+            "optimal": status == cp_model.OPTIMAL,
+        },
     )
     
     errors = SolutionValidator(instance).check_for_errors(solution) 

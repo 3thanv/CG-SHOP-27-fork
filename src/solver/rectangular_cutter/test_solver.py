@@ -8,13 +8,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 from cgshop2027_pyutils.grid import rasterize, rasterize_ring
-from cgshop2027_pyutils.io import read_solution
 from cgshop2027_pyutils.schemas import CGSHOP2027Instance
 from cgshop2027_pyutils.schemas.instance import PointSequence, PolyominoWithHoles
 from cgshop2027_pyutils.verify import SolutionValidator
 
 from main import main
-from solver import _build_candidate_centers, solve
+from path_solution import PathSolution
+from solver import _center_candidates, solve
 
 
 def ring(points: list[tuple[int, int]]) -> PointSequence:
@@ -46,7 +46,7 @@ class ExactSolverTests(unittest.TestCase):
     def test_one_cell_region_stays_in_place(self) -> None:
         problem = instance(ring([(0, 0), (1, 0), (1, 1), (0, 1)]))
 
-        solution = solve(problem)
+        solution = solve(problem, start=(0, 0), end=(0, 0))
 
         self.assertEqual(solution.max_tour_length, 0)
         self.assertTrue(solution.meta["optimal"])
@@ -58,17 +58,18 @@ class ExactSolverTests(unittest.TestCase):
             cutter_center=(1, 1),
         )
 
-        solution = solve(problem)
+        solution = solve(problem, start=(1, 1), end=(1, 1))
 
         self.assertEqual(list(solution.tours[0].points()), [(1, 1)])
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
-    def test_two_cells_have_minimum_closed_tour(self) -> None:
+    def test_two_cells_have_minimum_open_path(self) -> None:
         problem = instance(ring([(0, 0), (2, 0), (2, 1), (0, 1)]))
 
-        solution = solve(problem)
+        solution = solve(problem, start=(0, 0), end=(1, 0))
 
-        self.assertEqual(solution.max_tour_length, 2)
+        self.assertEqual(list(solution.tours[0].points()), [(0, 0), (1, 0)])
+        self.assertEqual(solution.max_tour_length, 1)
         self.assertTrue(solution.meta["optimal"])
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
@@ -79,22 +80,45 @@ class ExactSolverTests(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(ValueError, "exactly 2"):
-            solve(problem)
+            solve(problem, start=(0, 0), end=(0, 0))
 
-    def test_twenty_cell_region_solves_at_candidate_limit(self) -> None:
+    def test_twenty_cell_region_has_minimum_open_path(self) -> None:
         problem = instance(ring([(0, 0), (20, 0), (20, 1), (0, 1)]))
 
-        solution = solve(problem)
+        solution = solve(problem, start=(0, 0), end=(19, 0))
 
-        self.assertEqual(solution.max_tour_length, 38)
+        self.assertEqual(solution.max_tour_length, 19)
         self.assertTrue(solution.meta["optimal"])
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
-    def test_rejects_more_than_two_hundred_candidate_centers(self) -> None:
-        problem = instance(ring([(0, 0), (201, 0), (201, 1), (0, 1)]))
+    def test_endpoints_outside_covering_grid_are_included(self) -> None:
+        problem = instance(ring([(0, 0), (1, 0), (1, 1), (0, 1)]))
 
-        with self.assertRaisesRegex(ValueError, "at most 200 candidate cutter centers"):
-            solve(problem)
+        solution = solve(problem, start=(-1, 0), end=(0, 1))
+
+        self.assertEqual(list(solution.tours[0].points()), [(-1, 0), (0, 0), (0, 1)])
+        self.assertEqual(solution.max_tour_length, 2)
+        self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
+
+    def test_equal_endpoints_can_require_movement(self) -> None:
+        problem = instance(ring([(0, 0), (1, 0), (1, 1), (0, 1)]))
+
+        solution = solve(problem, start=(-1, 0), end=(-1, 0))
+
+        self.assertEqual(list(solution.tours[0].points()), [(-1, 0), (0, 0), (-1, 0)])
+        self.assertEqual(solution.max_tour_length, 2)
+        self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
+
+    def test_diagonal_endpoints_preserve_coverage(self) -> None:
+        problem = instance(ring([(0, 0), (2, 0), (2, 2), (0, 2)]))
+
+        solution = solve(problem, start=(0, 0), end=(1, 1))
+
+        points = list(solution.tours[0].points())
+        self.assertEqual(points[0], (0, 0))
+        self.assertEqual(points[-1], (1, 1))
+        self.assertEqual(solution.max_tour_length, 4)
+        self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
     def test_accepts_non_rectangular_cutter(self) -> None:
         cutter = ring([(0, 0), (2, 0), (2, 1), (1, 1), (1, 2), (0, 2)])
@@ -103,7 +127,7 @@ class ExactSolverTests(unittest.TestCase):
             cutter=cutter,
         )
 
-        solution = solve(problem)
+        solution = solve(problem, start=(0, 0), end=(0, 0))
 
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
@@ -121,18 +145,18 @@ class ExactSolverTests(unittest.TestCase):
         region_cells = set(rasterize(problem.region_to_cover).cells())
         cutter_cells = set(rasterize_ring(problem.cutter).cells())
 
-        centers, covering_centers = _build_candidate_centers(
-            problem, region_cells, cutter_cells
+        centers, covering_centers = _center_candidates(
+            problem, region_cells, cutter_cells, start=(0, 0), end=(0, 1)
         )
 
         transit_index = centers.index((1, 1))
         self.assertEqual(len(centers), 9)
         self.assertNotIn(transit_index, [i for indices in covering_centers.values() for i in indices])
-        solution = solve(problem)
-        self.assertEqual(solution.max_tour_length, 8)
+        solution = solve(problem, start=(0, 0), end=(0, 1))
+        self.assertEqual(solution.max_tour_length, 7)
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
 
-    def test_cli_writes_standard_solution_json(self) -> None:
+    def test_cli_writes_open_path_json(self) -> None:
         problem = instance(ring([(0, 0), (1, 0), (1, 1), (0, 1)]))
         with tempfile.TemporaryDirectory() as directory:
             input_path = Path(directory) / "input.instance.json"
@@ -143,18 +167,33 @@ class ExactSolverTests(unittest.TestCase):
                 patch.object(
                     sys,
                     "argv",
-                    ["main.py", str(input_path), str(output_path)],
+                    ["main.py", str(input_path), str(output_path),
+                     "--start", "-1", "0", "--end", "0", "1"],
                 ),
-                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stdout(io.StringIO()) as stdout,
             ):
                 main()
 
             serialized = json.loads(output_path.read_text(encoding="utf-8"))
-            solution = read_solution(output_path)
+            solution = PathSolution.model_validate_json(output_path.read_text(encoding="utf-8"))
 
-        self.assertEqual(serialized["content_type"], "CGSHOP2027_Solution")
+        self.assertEqual(serialized["content_type"], "CGSHOP2027_OpenPathSolution")
+        self.assertEqual(list(solution.tours[0].points()), [(-1, 0), (0, 0), (0, 1)])
+        self.assertEqual(solution.max_tour_length, 2)
+        self.assertIn("Longest route: 2", stdout.getvalue())
         self.assertTrue(solution.meta["optimal"])
         self.assertEqual(SolutionValidator(problem).check_for_errors(solution), [])
+
+    def test_cli_requires_both_endpoints(self) -> None:
+        for endpoints in [[], ["--start", "0", "0"], ["--end", "0", "0"]]:
+            with (
+                self.subTest(endpoints=endpoints),
+                patch.object(sys, "argv", ["main.py", "input.json", "output.json", *endpoints]),
+                contextlib.redirect_stderr(io.StringIO()),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                main()
+            self.assertEqual(raised.exception.code, 2)
 
 
 if __name__ == "__main__":
