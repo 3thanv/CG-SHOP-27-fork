@@ -1,0 +1,10 @@
+instance,solution,region_cells,cutter_cells,cutters,greedy_length,tour_length,best_lower_bound,optimal,status,used_fallback,model_variables,total_seconds,validation_errors
+irregular/random_k1_seed5100_6region_1cutter_cells.instance.json,irregular/random_k1_seed5100_6region_1cutter_cells.solution.json,6,1,1,10,10,10.0,True,OPTIMAL,False,103,0.0378,0
+irregular/random_k1_seed5101_10region_2cutter_cells.instance.json,irregular/random_k1_seed5101_10region_2cutter_cells.solution.json,10,2,1,8,8,8.0,True,OPTIMAL,False,130,0.0095,0
+irregular/random_k1_seed5102_14region_3cutter_cells.instance.json,irregular/random_k1_seed5102_14region_3cutter_cells.solution.json,14,3,1,10,10,10.0,True,OPTIMAL,False,271,0.05,0
+rectangles/rectangle_random_k1_seed5300_6region_1cutter_cells.instance.json,rectangles/rectangle_random_k1_seed5300_6region_1cutter_cells.solution.json,6,1,1,6,6,6.0,True,OPTIMAL,False,49,0.0024,0
+rectangles/rectangle_random_k1_seed5301_12region_2cutter_cells.instance.json,rectangles/rectangle_random_k1_seed5301_12region_2cutter_cells.solution.json,12,2,1,12,8,8.0,True,OPTIMAL,False,130,0.0109,0
+rectangles/rectangle_random_k1_seed5302_20region_4cutter_cells.instance.json,rectangles/rectangle_random_k1_seed5302_20region_4cutter_cells.solution.json,20,4,1,12,10,10.0,True,OPTIMAL,False,271,0.1535,0
+rectangular-cutters/random_k1_seed5200_8region_2cutter_cells.instance.json,rectangular-cutters/random_k1_seed5200_8region_2cutter_cells.solution.json,8,2,1,8,8,8.0,True,OPTIMAL,False,130,0.0117,0
+rectangular-cutters/random_k1_seed5201_12region_3cutter_cells.instance.json,rectangular-cutters/random_k1_seed5201_12region_3cutter_cells.solution.json,12,3,1,10,10,10.0,True,OPTIMAL,False,271,0.0873,0
+rectangular-cutters/random_k1_seed5202_18region_4cutter_cells.instance.json,rectangular-cutters/random_k1_seed5202_18region_4cutter_cells.solution.json,18,4,1,20,20,8.0,False,FEASIBLE,False,586,5.0122,0

@@ -1,0 +1,40 @@
+{
+  "content_type": "CGSHOP2027_Instance",
+  "instance_uid": "rectangle_random_k1_seed5302_20region_4cutter_cells",
+  "region_to_cover": {
+    "outer_boundary": {
+      "x": [
+        4,
+        4,
+        0,
+        0
+      ],
+      "y": [
+        0,
+        5,
+        5,
+        0
+      ]
+    },
+    "inner_boundaries": []
+  },
+  "cutter": {
+    "x": [
+      2,
+      2,
+      0,
+      0
+    ],
+    "y": [
+      0,
+      2,
+      2,
+      0
+    ]
+  },
+  "cutter_center": [
+    1,
+    1
+  ],
+  "number_of_cutters": 1
+}

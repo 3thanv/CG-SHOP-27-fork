@@ -1,0 +1,42 @@
+{
+  "content_type": "CGSHOP2027_Solution",
+  "instance_uid": "random_k1_seed5102_14region_3cutter_cells",
+  "tours": [
+    {
+      "x": [
+        4,
+        7,
+        7,
+        6,
+        6,
+        4
+      ],
+      "y": [
+        5,
+        5,
+        6,
+        6,
+        7,
+        7
+      ]
+    }
+  ],
+  "meta": {
+    "algorithm": "edge_euler_cp_sat",
+    "optimal": true,
+    "status": "OPTIMAL",
+    "initial_max_tour_length": 10,
+    "best_bound": 10.0,
+    "region_cells": 14,
+    "grid_vertices": 30,
+    "grid_edges": 49,
+    "preprocessing_seconds": 0.00044495798647403717,
+    "build_seconds": 0.0023802079958841205,
+    "solve_seconds": 0.04702854200149886,
+    "model_variables": 271,
+    "model_constraints": 494,
+    "used_fallback": false,
+    "hints": true,
+    "total_seconds": 0.05000141597702168
+  }
+}

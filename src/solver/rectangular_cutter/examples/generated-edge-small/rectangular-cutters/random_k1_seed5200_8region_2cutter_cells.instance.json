@@ -1,0 +1,64 @@
+{
+  "content_type": "CGSHOP2027_Instance",
+  "instance_uid": "random_k1_seed5200_8region_2cutter_cells",
+  "region_to_cover": {
+    "outer_boundary": {
+      "x": [
+        3,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        4,
+        4,
+        3,
+        2,
+        2,
+        3,
+        3,
+        2,
+        2
+      ],
+      "y": [
+        4,
+        4,
+        3,
+        3,
+        4,
+        5,
+        6,
+        6,
+        7,
+        7,
+        7,
+        6,
+        6,
+        5,
+        5,
+        4
+      ]
+    },
+    "inner_boundaries": []
+  },
+  "cutter": {
+    "x": [
+      1,
+      1,
+      0,
+      0
+    ],
+    "y": [
+      0,
+      2,
+      2,
+      0
+    ]
+  },
+  "cutter_center": [
+    0,
+    1
+  ],
+  "number_of_cutters": 1
+}

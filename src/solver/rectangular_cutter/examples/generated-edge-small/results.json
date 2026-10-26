@@ -1,0 +1,208 @@
+{
+  "generator": "generate_testcases.py",
+  "generation": [
+    {
+      "directory": "irregular",
+      "seed": 5100,
+      "region_cells": [
+        6,
+        10,
+        14
+      ],
+      "cutter_cells": [
+        1,
+        2,
+        3
+      ],
+      "region_grid_size": 8,
+      "cutter_grid_size": 4
+    },
+    {
+      "directory": "rectangular-cutters",
+      "seed": 5200,
+      "region_cells": [
+        8,
+        12,
+        18
+      ],
+      "cutter_cells": [
+        2,
+        3,
+        4
+      ],
+      "region_grid_size": 8,
+      "cutter_grid_size": 4,
+      "rectangular_cutter": true
+    },
+    {
+      "directory": "rectangles",
+      "seed": 5300,
+      "region_cells": [
+        6,
+        12,
+        20
+      ],
+      "cutter_cells": [
+        1,
+        2,
+        4
+      ],
+      "rectangular_region": true,
+      "rectangular_cutter": true
+    }
+  ],
+  "solver": "edge_solver.py",
+  "solve_parameters": {
+    "time_limit_seconds": 5.0,
+    "num_workers": 4,
+    "use_hints": true
+  },
+  "expected_cases": 9,
+  "completed_cases": 9,
+  "results": [
+    {
+      "instance": "irregular/random_k1_seed5100_6region_1cutter_cells.instance.json",
+      "solution": "irregular/random_k1_seed5100_6region_1cutter_cells.solution.json",
+      "region_cells": 6,
+      "cutter_cells": 1,
+      "cutters": 1,
+      "greedy_length": 10,
+      "tour_length": 10,
+      "best_lower_bound": 10.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 103,
+      "total_seconds": 0.0378,
+      "validation_errors": 0
+    },
+    {
+      "instance": "irregular/random_k1_seed5101_10region_2cutter_cells.instance.json",
+      "solution": "irregular/random_k1_seed5101_10region_2cutter_cells.solution.json",
+      "region_cells": 10,
+      "cutter_cells": 2,
+      "cutters": 1,
+      "greedy_length": 8,
+      "tour_length": 8,
+      "best_lower_bound": 8.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 130,
+      "total_seconds": 0.0095,
+      "validation_errors": 0
+    },
+    {
+      "instance": "irregular/random_k1_seed5102_14region_3cutter_cells.instance.json",
+      "solution": "irregular/random_k1_seed5102_14region_3cutter_cells.solution.json",
+      "region_cells": 14,
+      "cutter_cells": 3,
+      "cutters": 1,
+      "greedy_length": 10,
+      "tour_length": 10,
+      "best_lower_bound": 10.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 271,
+      "total_seconds": 0.05,
+      "validation_errors": 0
+    },
+    {
+      "instance": "rectangles/rectangle_random_k1_seed5300_6region_1cutter_cells.instance.json",
+      "solution": "rectangles/rectangle_random_k1_seed5300_6region_1cutter_cells.solution.json",
+      "region_cells": 6,
+      "cutter_cells": 1,
+      "cutters": 1,
+      "greedy_length": 6,
+      "tour_length": 6,
+      "best_lower_bound": 6.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 49,
+      "total_seconds": 0.0024,
+      "validation_errors": 0
+    },
+    {
+      "instance": "rectangles/rectangle_random_k1_seed5301_12region_2cutter_cells.instance.json",
+      "solution": "rectangles/rectangle_random_k1_seed5301_12region_2cutter_cells.solution.json",
+      "region_cells": 12,
+      "cutter_cells": 2,
+      "cutters": 1,
+      "greedy_length": 12,
+      "tour_length": 8,
+      "best_lower_bound": 8.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 130,
+      "total_seconds": 0.0109,
+      "validation_errors": 0
+    },
+    {
+      "instance": "rectangles/rectangle_random_k1_seed5302_20region_4cutter_cells.instance.json",
+      "solution": "rectangles/rectangle_random_k1_seed5302_20region_4cutter_cells.solution.json",
+      "region_cells": 20,
+      "cutter_cells": 4,
+      "cutters": 1,
+      "greedy_length": 12,
+      "tour_length": 10,
+      "best_lower_bound": 10.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 271,
+      "total_seconds": 0.1535,
+      "validation_errors": 0
+    },
+    {
+      "instance": "rectangular-cutters/random_k1_seed5200_8region_2cutter_cells.instance.json",
+      "solution": "rectangular-cutters/random_k1_seed5200_8region_2cutter_cells.solution.json",
+      "region_cells": 8,
+      "cutter_cells": 2,
+      "cutters": 1,
+      "greedy_length": 8,
+      "tour_length": 8,
+      "best_lower_bound": 8.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 130,
+      "total_seconds": 0.0117,
+      "validation_errors": 0
+    },
+    {
+      "instance": "rectangular-cutters/random_k1_seed5201_12region_3cutter_cells.instance.json",
+      "solution": "rectangular-cutters/random_k1_seed5201_12region_3cutter_cells.solution.json",
+      "region_cells": 12,
+      "cutter_cells": 3,
+      "cutters": 1,
+      "greedy_length": 10,
+      "tour_length": 10,
+      "best_lower_bound": 10.0,
+      "optimal": true,
+      "status": "OPTIMAL",
+      "used_fallback": false,
+      "model_variables": 271,
+      "total_seconds": 0.0873,
+      "validation_errors": 0
+    },
+    {
+      "instance": "rectangular-cutters/random_k1_seed5202_18region_4cutter_cells.instance.json",
+      "solution": "rectangular-cutters/random_k1_seed5202_18region_4cutter_cells.solution.json",
+      "region_cells": 18,
+      "cutter_cells": 4,
+      "cutters": 1,
+      "greedy_length": 20,
+      "tour_length": 20,
+      "best_lower_bound": 8.0,
+      "optimal": false,
+      "status": "FEASIBLE",
+      "used_fallback": false,
+      "model_variables": 586,
+      "total_seconds": 5.0122,
+      "validation_errors": 0
+    }
+  ]
+}
