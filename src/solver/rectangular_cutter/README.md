@@ -29,6 +29,13 @@ distinct covering cutter-center positions are rejected. If CP-SAT finds no
 feasible tour within the time limit, the command exits with an error instead
 of writing a solution file.
 
+The model adds a valid coverage-based lower bound: one initial cutter placement
+covers at most the largest placement coverage, and each move can add at most
+the largest one-step coverage gain. For instances whose coverage masks are
+reflection-symmetric, root-position symmetry breaking removes equivalent
+reflected tours. These cuts strengthen search without restricting the set of
+optimal tour lengths.
+
 Designed baseline instances and their exact solutions are in
 `examples/exact-small`.
 

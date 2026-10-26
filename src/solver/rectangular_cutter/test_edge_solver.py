@@ -12,7 +12,17 @@ from cgshop2027_pyutils.schemas import CGSHOP2027Instance
 from cgshop2027_pyutils.verify import SolutionValidator
 from ortools.sat.python import cp_model
 
-from edge_solver import Walk, _build_model, _greedy, _grid, _hint, _tour, solve
+from edge_solver import (
+    Walk,
+    _build_model,
+    _coverage_lower_bound,
+    _greedy,
+    _grid,
+    _hint,
+    _reflection_symmetry_axes,
+    _tour,
+    solve,
+)
 
 
 def rectangle(width, height, *, robots=1, cutter_width=1, center=(0, 0), offset=(0, 0)):
@@ -92,6 +102,18 @@ class EdgeSolverTests(unittest.TestCase):
                 self.assert_valid(problem, solution)
                 self.assertTrue(solution.meta["optimal"])
                 self.assertEqual(solution.max_tour_length, exhaustive_optimum(problem))
+                self.assertLessEqual(
+                    _coverage_lower_bound(_grid(problem), robots),
+                    solution.max_tour_length,
+                )
+
+    def test_coverage_bound_and_reflection_breaking_are_detected(self):
+        symmetric = _grid(rectangle(3, 2))
+        self.assertEqual(_coverage_lower_bound(symmetric, 1), 6)
+        self.assertEqual(_reflection_symmetry_axes(symmetric), (True, True))
+
+        asymmetric = _grid(rectangle(3, 2, cutter_width=2, center=(0, 0)))
+        self.assertEqual(_reflection_symmetry_axes(asymmetric), (True, True))
 
     def test_minimizes_longest_tour_for_multiple_cutters(self):
         problem = rectangle(8, 1, robots=2)
@@ -172,8 +194,12 @@ class EdgeSolverTests(unittest.TestCase):
             with self.subTest(limit=limit):
                 solution = solve(problem, time_limit=limit, num_workers=1)
                 self.assert_valid(problem, solution)
-                self.assertTrue(solution.meta["used_fallback"])
-                self.assertFalse(solution.meta["optimal"])
+                self.assertEqual(
+                    solution.meta["optimal"],
+                    solution.meta["initial_max_tour_length"]
+                    <= solution.meta["coverage_lower_bound"],
+                )
+                self.assertEqual(solution.meta["used_fallback"], not solution.meta["optimal"])
 
     def test_hints_are_optional(self):
         problem = rectangle(3, 2, robots=2)

@@ -1,0 +1,40 @@
+{
+  "content_type": "CGSHOP2027_Instance",
+  "instance_uid": "rectangle_50x50_seed5050_25cutter_cells",
+  "region_to_cover": {
+    "outer_boundary": {
+      "x": [
+        50,
+        50,
+        0,
+        0
+      ],
+      "y": [
+        0,
+        50,
+        50,
+        0
+      ]
+    },
+    "inner_boundaries": []
+  },
+  "cutter": {
+    "x": [
+      5,
+      5,
+      0,
+      0
+    ],
+    "y": [
+      0,
+      5,
+      5,
+      0
+    ]
+  },
+  "cutter_center": [
+    2,
+    2
+  ],
+  "number_of_cutters": 1
+}
